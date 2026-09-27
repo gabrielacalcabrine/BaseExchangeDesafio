@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrderAccumulator.Domain.Exposures;
+using OrderAccumulator.Domain.Orders;
 using OrderAccumulator.Infrastructure.Persistence;
 
 namespace OrderAccumulator.Infrastructure;
@@ -16,6 +17,7 @@ public static class DependencyInjection
         // A fábrica recebe a connection string e o repositório depende apenas da sua abstração.
         services.AddSingleton<IDbConnectionFactory>(_ => new NpgsqlConnectionFactory(connectionString));
         services.AddScoped<IExposureRepository, DapperExposureRepository>();
+        services.AddScoped<IOrderRepository, DapperOrderRepository>();
         return services;
     }
 }
