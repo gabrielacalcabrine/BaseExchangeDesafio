@@ -1,0 +1,26 @@
+# Dependências instaladas.
+node_modules/
+
+# Saídas de build e cobertura.
+dist/
+build/
+bin/
+obj/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Arquivos de ambiente locais.
+.env
+.env.*
+!.env.example
+
+# Logs e arquivos temporários.
+*.log
+*.tmp
+
+# Arquivos gerados por IDEs e pelo sistema operacional.
+.DS_Store
+.idea/
+.vscode/
+.vs/
