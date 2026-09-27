@@ -7,18 +7,12 @@ using OrderAccumulator.Domain.Orders;
 namespace OrderAccumulator.Application.Orders.Services;
 
 // Caso de uso que orquestra domínio e portas sem conhecer HTTP, Dapper ou PostgreSQL.
-public sealed class CreateOrderService : IOrderAccumulator
+public sealed class CreateOrderService(
+    IExposureRepository exposureRepository,
+    IOrderRepository orderRepository) : IOrderAccumulator
 {
-    private readonly IExposureRepository _exposureRepository;
-    private readonly IOrderRepository _orderRepository;
-
-    public CreateOrderService(
-        IExposureRepository exposureRepository,
-        IOrderRepository orderRepository)
-    {
-        _exposureRepository = exposureRepository;
-        _orderRepository = orderRepository;
-    }
+    private readonly IExposureRepository _exposureRepository = exposureRepository;
+    private readonly IOrderRepository _orderRepository = orderRepository;
 
     public async Task<CreateOrderResult> ExecutarAsync(
         CreateOrderCommand command,
