@@ -6,5 +6,6 @@ namespace OrderAccumulator.Domain.Orders;
 public interface IOrderRepository
 {
     // Persiste a ordem e a exposição atual dentro da mesma transação.
-    Task SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken);
+    // Retorna false quando outra transação alterou a exposição antes desta gravação.
+    Task<bool> SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken);
 }

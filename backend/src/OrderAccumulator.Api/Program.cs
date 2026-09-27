@@ -1,9 +1,14 @@
 using OrderAccumulator.Infrastructure;
+using OrderAccumulator.Application.Orders.Services;
+using OrderAccumulator.Application.Ports;
 
 // Composition Root: ponto único onde implementações concretas são registradas.
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddExchangePersistence(builder.Configuration);
+builder.Services.AddScoped<IOrderAccumulator, CreateOrderService>();
 // Registro explícito mantém o Composition Root claro e evita acoplamento a discovery automática.
 builder.Services.AddScoped<FluentValidation.IValidator<OrderAccumulator.Api.Contracts.Orders.CreateOrderRequest>,
     OrderAccumulator.Api.Contracts.Orders.CreateOrderRequestValidator>();
@@ -15,5 +20,9 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 
 var app = builder.Build();
 app.UseCors();
+// Swagger fica disponível em todos os ambientes para facilitar o desenvolvimento e a demonstração.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "OrderAccumulator API v1"));
 app.MapControllers();
 app.Run();

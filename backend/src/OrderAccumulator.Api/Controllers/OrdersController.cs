@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using OrderAccumulator.Api.Contracts.Orders;
+using OrderAccumulator.Application.Ports;
 
 namespace OrderAccumulator.Api.Controllers;
 
@@ -10,9 +11,12 @@ namespace OrderAccumulator.Api.Controllers;
 public sealed class OrdersController : ControllerBase
 {
     private readonly IValidator<CreateOrderRequest> validator;
+    private readonly IOrderAccumulator orderAccumulator;
 
-    public OrdersController(IValidator<CreateOrderRequest> validator)
-        => this.validator = validator;
+    public OrdersController(
+        IValidator<CreateOrderRequest> validator,
+        IOrderAccumulator orderAccumulator)
+        => (this.validator, this.orderAccumulator) = (validator, orderAccumulator);
 
     [HttpPost]
     public async Task<ActionResult<CreateOrderResponse>> Create(CreateOrderRequest request)
@@ -26,12 +30,15 @@ public sealed class OrdersController : ControllerBase
             return BadRequest(new CreateOrderResponse(false, 0, message));
         }
 
-        // TryToCommand() é um método de extensão que realiza o mapeamento manual request -> command.
-        // O mapper será mantido como adapter; o caso de uso será conectado na próxima etapa.
-        if (!request.TryToCommand(out _, out var error))
+        // TryToCommand() realiza o mapeamento manual request -> command.
+        if (!request.TryToCommand(out var command, out var error))
         {
             return BadRequest(new CreateOrderResponse(false, 0, error ?? "Requisição inválida."));
         }
-        return Ok(new CreateOrderResponse(false, 0, "Caso de uso ainda não implementado."));
+
+        // O controller delega a regra ao caso de uso e converte apenas o resultado HTTP.
+        var result = await orderAccumulator.ExecuteAsync(command!, HttpContext.RequestAborted);
+        var response = result.ToResponse();
+        return result.Success ? Ok(response) : BadRequest(response);
     }
 }

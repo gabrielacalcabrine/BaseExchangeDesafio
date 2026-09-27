@@ -7,7 +7,7 @@ namespace OrderAccumulator.Infrastructure.Persistence;
 // Adapter que executa SQL explícito para gravar uma ordem aceita.
 public sealed class DapperOrderRepository(IDbConnectionFactory connectionFactory) : IOrderRepository
 {
-    public async Task SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
+    public async Task<bool> SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
     {
         await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -36,13 +36,29 @@ public sealed class DapperOrderRepository(IDbConnectionFactory connectionFactory
                 usuario_alteracao = @User,
                 data_alteracao = @Now,
                 versao = versao + 1
-            WHERE ativo_codigo = @AssetCode;
+            WHERE ativo_codigo = @AssetCode
+              AND valor_atual = @PreviousValue;
             """;
-        await connection.ExecuteAsync(new CommandDefinition(
+        var updatedRows = await connection.ExecuteAsync(new CommandDefinition(
             updateExposureSql,
-            new { AssetCode = assetCode, CurrentValue = exposure.CurrentValue, User = user, Now = now },
+            new
+            {
+                AssetCode = assetCode,
+                CurrentValue = exposure.CurrentValue,
+                // A atualização condicional implementa controle de concorrência otimista.
+                PreviousValue = exposure.CurrentValue - order.SignedFinancialValue(),
+                User = user,
+                Now = now
+            },
             transaction,
             cancellationToken: cancellationToken));
+
+        if (updatedRows == 0)
+        {
+            // Outra requisição alterou a exposição; rollback evita registrar uma ordem inconsistente.
+            await transaction.RollbackAsync(cancellationToken);
+            return false;
+        }
 
         // Insere apenas ordens aceitas; ordens rejeitadas não chegam a este repositório.
         const string insertOrderSql = """
@@ -80,6 +96,7 @@ public sealed class DapperOrderRepository(IDbConnectionFactory connectionFactory
 
         // Commit confirma ordem e exposição juntas; qualquer erro provoca rollback ao descartar a transação.
         await transaction.CommitAsync(cancellationToken);
+        return true;
     }
 
     // Converte o enum do domínio para o código textual persistido no banco.
