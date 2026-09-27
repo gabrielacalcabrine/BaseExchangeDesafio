@@ -5,12 +5,19 @@ using OrderAccumulator.Domain.Orders;
 namespace OrderAccumulator.Infrastructure.Persistence;
 
 // Adapter de persistência: SQL explícito traduz a porta do domínio para PostgreSQL.
-public sealed class DapperExposureRepository(IDbConnectionFactory connectionFactory) : IExposureRepository
+public sealed class DapperExposureRepository : IExposureRepository
 {
-    public async Task<Exposure> GetOrCreateAsync(Asset asset, CancellationToken cancellationToken)
+    private readonly IDbConnectionFactory _connectionFactory;
+
+    public DapperExposureRepository(IDbConnectionFactory connectionFactory)
+    {
+        _connectionFactory = connectionFactory;
+    }
+
+    public async Task<Exposure> ObterOuCriarAsync(Asset asset, CancellationToken cancellationToken)
     {
         var code = ToCode(asset);
-        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        await using var connection = await _connectionFactory.CriarConexaoAbertaAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         // INSERT ... ON CONFLICT torna a criação idempotente quando duas requisições chegam juntas.
@@ -32,13 +39,13 @@ public sealed class DapperExposureRepository(IDbConnectionFactory connectionFact
             new CommandDefinition(selectSql, new { Code = code }, transaction, cancellationToken: cancellationToken));
 
         await transaction.CommitAsync(cancellationToken);
-        return Exposure.Rehydrate(asset, currentValue);
+        return Exposure.Reidratar(asset, currentValue);
     }
 
-    public async Task SaveAsync(Exposure exposure, CancellationToken cancellationToken)
+    public async Task SalvarAsync(Exposure exposure, CancellationToken cancellationToken)
     {
         var code = ToCode(exposure.Asset);
-        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        await using var connection = await _connectionFactory.CriarConexaoAbertaAsync(cancellationToken);
 
         // O UPDATE registra o novo valor e os dados de auditoria definidos na diagramção.
         const string updateSql = """

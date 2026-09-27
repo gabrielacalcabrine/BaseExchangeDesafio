@@ -7,34 +7,43 @@ using OrderAccumulator.Domain.Orders;
 namespace OrderAccumulator.Application.Orders.Services;
 
 // Caso de uso que orquestra domínio e portas sem conhecer HTTP, Dapper ou PostgreSQL.
-public sealed class CreateOrderService(
-    IExposureRepository exposureRepository,
-    IOrderRepository orderRepository) : IOrderAccumulator
+public sealed class CreateOrderService : IOrderAccumulator
 {
-    public async Task<CreateOrderResult> ExecuteAsync(
+    private readonly IExposureRepository _exposureRepository;
+    private readonly IOrderRepository _orderRepository;
+
+    public CreateOrderService(
+        IExposureRepository exposureRepository,
+        IOrderRepository orderRepository)
+    {
+        _exposureRepository = exposureRepository;
+        _orderRepository = orderRepository;
+    }
+
+    public async Task<CreateOrderResult> ExecutarAsync(
         CreateOrderCommand command,
         CancellationToken cancellationToken)
     {
         // A entidade concentra a criação de uma ordem válida no domínio.
-        var order = Order.Create(command.Asset, command.Side, command.Quantity, command.Price);
+        var order = Order.Criar(command.Asset, command.Side, command.Quantity, command.Price);
 
         // A exposição é carregada por ativo; cada ativo possui seu próprio limite.
-        var exposure = await exposureRepository.GetOrCreateAsync(order.Asset, cancellationToken);
-        if (!exposure.TryRegister(order, out var error))
+        var exposure = await _exposureRepository.ObterOuCriarAsync(order.Asset, cancellationToken);
+        if (!exposure.TentarRegistrar(order, out var error))
         {
             // Ordem acima do limite não é enviada ao repository e não altera o estado persistido.
-            return CreateOrderResult.Failure(error ?? "A ordem excede o limite de exposição.", exposure.CurrentValue);
+            return CreateOrderResult.Falha(error ?? "A ordem excede o limite de exposição.", exposure.CurrentValue);
         }
 
         // O repository grava ordem e exposição na mesma transação SQL.
-        var saved = await orderRepository.SaveAcceptedAsync(order, exposure, "system", cancellationToken);
+        var saved = await _orderRepository.SalvarOrdemAceitaAsync(order, exposure, "system", cancellationToken);
         if (!saved)
         {
             // Falha de concorrência: outro processo atualizou a exposição antes desta gravação.
-            return CreateOrderResult.Failure(
+            return CreateOrderResult.Falha(
                 "A exposição foi alterada por outra operação. Tente enviar a ordem novamente.");
         }
 
-        return CreateOrderResult.Succeeded(exposure.CurrentValue);
+        return CreateOrderResult.Sucesso(exposure.CurrentValue);
     }
 }

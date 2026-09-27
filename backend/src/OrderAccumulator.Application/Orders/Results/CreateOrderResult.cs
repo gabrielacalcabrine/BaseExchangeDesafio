@@ -4,10 +4,10 @@ namespace OrderAccumulator.Application.Orders.Results;
 public sealed record CreateOrderResult(bool Success, decimal CurrentExposure, string ErrorMessage)
 {
     // Factory para padronizar respostas de erro.
-    public static CreateOrderResult Failure(string message, decimal currentExposure = 0)
+    public static CreateOrderResult Falha(string message, decimal currentExposure = 0)
         => new(false, currentExposure, message);
 
     // Factory para padronizar respostas de sucesso.
-    public static CreateOrderResult Succeeded(decimal currentExposure)
+    public static CreateOrderResult Sucesso(decimal currentExposure)
         => new(true, currentExposure, string.Empty);
 }

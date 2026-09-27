@@ -9,14 +9,14 @@ namespace OrderAccumulator.UnitTests;
 public sealed class CreateOrderServiceTests
 {
     [Fact]
-    public async Task ExecuteAsync_ShouldPersistAcceptedOrderAndReturnExposure()
+    public async Task ExecutarAsync_DevePersistirOrdemAceitaERetornarExposicao()
     {
         // A exposição inicia zerada e a compra deve aumentar seu valor.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4);
         var orderRepository = new FakeOrderRepository { SaveResult = true };
         var service = new CreateOrderService(exposureRepository, orderRepository);
 
-        var result = await service.ExecuteAsync(
+        var result = await service.ExecutarAsync(
             new CreateOrderCommand(Asset.Petr4, Side.Buy, 100, 10.50m),
             CancellationToken.None);
 
@@ -26,14 +26,14 @@ public sealed class CreateOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ShouldRejectOrderWithoutPersistingWhenLimitIsExceeded()
+    public async Task ExecutarAsync_DeveRejeitarOrdemSemPersistirQuandoLimiteForExcedido()
     {
         // Uma exposição próxima do limite deve rejeitar a ordem que ultrapassaria R$ 1.000.000.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4, 999_999m);
         var orderRepository = new FakeOrderRepository { SaveResult = true };
         var service = new CreateOrderService(exposureRepository, orderRepository);
 
-        var result = await service.ExecuteAsync(
+        var result = await service.ExecutarAsync(
             new CreateOrderCommand(Asset.Petr4, Side.Buy, 2, 1m),
             CancellationToken.None);
 
@@ -43,14 +43,14 @@ public sealed class CreateOrderServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_ShouldReturnFailureWhenRepositoryDetectsConcurrencyConflict()
+    public async Task ExecutarAsync_DeveRetornarFalhaQuandoRepositoryDetectarConflitoDeConcorrencia()
     {
         // A porta de persistência pode sinalizar que outra operação atualizou o ativo primeiro.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4);
         var orderRepository = new FakeOrderRepository { SaveResult = false };
         var service = new CreateOrderService(exposureRepository, orderRepository);
 
-        var result = await service.ExecuteAsync(
+        var result = await service.ExecutarAsync(
             new CreateOrderCommand(Asset.Petr4, Side.Sell, 10, 5m),
             CancellationToken.None);
 
@@ -61,10 +61,10 @@ public sealed class CreateOrderServiceTests
     // Fake repository de exposição: substitui PostgreSQL sem alterar o caso de uso.
     private sealed class FakeExposureRepository(Asset asset, decimal currentValue = 0) : IExposureRepository
     {
-        private readonly Exposure exposure = Exposure.Rehydrate(asset, currentValue);
-        public Task<Exposure> GetOrCreateAsync(Asset requestedAsset, CancellationToken cancellationToken)
+        private readonly Exposure exposure = Exposure.Reidratar(asset, currentValue);
+        public Task<Exposure> ObterOuCriarAsync(Asset requestedAsset, CancellationToken cancellationToken)
             => Task.FromResult(exposure);
-        public Task SaveAsync(Exposure savedExposure, CancellationToken cancellationToken)
+        public Task SalvarAsync(Exposure savedExposure, CancellationToken cancellationToken)
             => Task.CompletedTask;
     }
 
@@ -74,7 +74,7 @@ public sealed class CreateOrderServiceTests
         public bool SaveResult { get; init; }
         public bool WasCalled { get; private set; }
 
-        public Task<bool> SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
+        public Task<bool> SalvarOrdemAceitaAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
         {
             WasCalled = true;
             return Task.FromResult(SaveResult);

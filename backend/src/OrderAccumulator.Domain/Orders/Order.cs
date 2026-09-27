@@ -12,11 +12,11 @@ public sealed class Order
     public decimal Price { get; }
 
     // Factory method centraliza a criação e deixa validações futuras em um só lugar.
-    public static Order Create(Asset asset, Side side, int quantity, decimal price)
+    public static Order Criar(Asset asset, Side side, int quantity, decimal price)
     {
         // Os Value Objects protegem a entidade mesmo quando ela é criada fora do adapter HTTP.
-        _ = OrderQuantity.Create(quantity);
-        _ = OrderPrice.Create(price);
+        _ = OrderQuantity.Criar(quantity);
+        _ = OrderPrice.Criar(price);
         return new(asset, side, quantity, price);
     }
 

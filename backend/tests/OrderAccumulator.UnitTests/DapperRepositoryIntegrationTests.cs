@@ -14,38 +14,38 @@ public sealed class DapperRepositoryIntegrationTests
         ?? "Host=localhost;Port=5432;Database=exchange;Username=exchange;Password=exchange";
 
     [Fact]
-    public async Task ExposureRepository_ShouldCreateAndReadExposure()
+    public async Task RepositoryExposicao_DeveCriarELerExposicao()
     {
-        await ResetAssetAsync();
+        await RestaurarAtivoAsync();
         try
         {
             var factory = new NpgsqlConnectionFactory(connectionString);
             var repository = new DapperExposureRepository(factory);
 
-            var exposure = await repository.GetOrCreateAsync(Asset.Petr4, CancellationToken.None);
+            var exposure = await repository.ObterOuCriarAsync(Asset.Petr4, CancellationToken.None);
 
             Assert.Equal(Asset.Petr4, exposure.Asset);
             Assert.Equal(0m, exposure.CurrentValue);
         }
         finally
         {
-            await ResetAssetAsync();
+            await RestaurarAtivoAsync();
         }
     }
 
     [Fact]
-    public async Task OrderRepository_ShouldPersistOrderAndExposureTogether()
+    public async Task RepositoryOrdem_DevePersistirOrdemEExposicaoJuntas()
     {
-        await ResetAssetAsync();
+        await RestaurarAtivoAsync();
         try
         {
             var factory = new NpgsqlConnectionFactory(connectionString);
             var repository = new DapperOrderRepository(factory);
-            var order = Order.Create(Asset.Petr4, Side.Buy, 100, 12.34m);
-            var exposure = Exposure.Empty(Asset.Petr4);
-            Assert.True(exposure.TryRegister(order, out _));
+            var order = Order.Criar(Asset.Petr4, Side.Buy, 100, 12.34m);
+            var exposure = Exposure.Vazia(Asset.Petr4);
+            Assert.True(exposure.TentarRegistrar(order, out _));
 
-            var saved = await repository.SaveAcceptedAsync(order, exposure, "integration-test", CancellationToken.None);
+            var saved = await repository.SalvarOrdemAceitaAsync(order, exposure, "integration-test", CancellationToken.None);
 
             Assert.True(saved);
             await using var connection = new NpgsqlConnection(connectionString);
@@ -62,50 +62,50 @@ public sealed class DapperRepositoryIntegrationTests
         }
         finally
         {
-            await ResetAssetAsync();
+            await RestaurarAtivoAsync();
         }
     }
 
     [Fact]
-    public async Task OrderRepository_ShouldRejectStaleExposureSnapshot()
+    public async Task RepositoryOrdem_DeverRejeitarSnapshotDeExposicaoDesatualizado()
     {
-        await ResetAssetAsync();
+        await RestaurarAtivoAsync();
         try
         {
             var factory = new NpgsqlConnectionFactory(connectionString);
             var repository = new DapperOrderRepository(factory);
 
-            var firstOrder = Order.Create(Asset.Petr4, Side.Buy, 100, 10m);
-            var firstExposure = Exposure.Empty(Asset.Petr4);
-            Assert.True(firstExposure.TryRegister(firstOrder, out _));
-            Assert.True(await repository.SaveAcceptedAsync(firstOrder, firstExposure, "integration-test", CancellationToken.None));
+            var firstOrder = Order.Criar(Asset.Petr4, Side.Buy, 100, 10m);
+            var firstExposure = Exposure.Vazia(Asset.Petr4);
+            Assert.True(firstExposure.TentarRegistrar(firstOrder, out _));
+            Assert.True(await repository.SalvarOrdemAceitaAsync(firstOrder, firstExposure, "integration-test", CancellationToken.None));
 
             // Este snapshot não conhece a primeira ordem e deve falhar pelo controle de concorrência.
-            var staleOrder = Order.Create(Asset.Petr4, Side.Buy, 100, 10m);
-            var staleExposure = Exposure.Empty(Asset.Petr4);
-            Assert.True(staleExposure.TryRegister(staleOrder, out _));
+            var staleOrder = Order.Criar(Asset.Petr4, Side.Buy, 100, 10m);
+            var staleExposure = Exposure.Vazia(Asset.Petr4);
+            Assert.True(staleExposure.TentarRegistrar(staleOrder, out _));
 
-            var saved = await repository.SaveAcceptedAsync(staleOrder, staleExposure, "integration-test", CancellationToken.None);
+            var saved = await repository.SalvarOrdemAceitaAsync(staleOrder, staleExposure, "integration-test", CancellationToken.None);
 
             Assert.False(saved);
-            var orderCount = await CountOrdersAsync();
+            var orderCount = await ContarOrdensAsync();
             Assert.Equal(1, orderCount);
         }
         finally
         {
-            await ResetAssetAsync();
+            await RestaurarAtivoAsync();
         }
     }
 
     // Limpa apenas os dados usados por este conjunto de testes.
-    private async Task ResetAssetAsync()
+    private async Task RestaurarAtivoAsync()
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
         await connection.ExecuteAsync("DELETE FROM ordens WHERE ativo_codigo = @AssetCode; UPDATE exposicoes SET valor_atual = 0, versao = 1, usuario_alteracao = 'test-cleanup', data_alteracao = NOW() WHERE ativo_codigo = @AssetCode;", new { AssetCode });
     }
 
-    private async Task<int> CountOrdersAsync()
+    private async Task<int> ContarOrdensAsync()
     {
         await using var connection = new NpgsqlConnection(connectionString);
         return await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM ordens WHERE ativo_codigo = @AssetCode", new { AssetCode });

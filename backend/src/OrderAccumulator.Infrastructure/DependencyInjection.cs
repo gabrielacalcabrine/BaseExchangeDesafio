@@ -9,7 +9,7 @@ namespace OrderAccumulator.Infrastructure;
 // Composition da infraestrutura: registra Dapper, Npgsql e os adapters de persistência.
 public static class DependencyInjection
 {
-    public static IServiceCollection AddExchangePersistence(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AdicionarPersistencia(IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("ExchangeDatabase")
             ?? throw new InvalidOperationException("ConnectionStrings:ExchangeDatabase não foi configurada.");

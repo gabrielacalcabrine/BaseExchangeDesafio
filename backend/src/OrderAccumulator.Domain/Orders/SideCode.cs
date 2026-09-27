@@ -8,7 +8,7 @@ public sealed record SideCode
     private SideCode(string value) => Value = value;
     public string Value { get; }
 
-    public static SideCode Create(string value)
+    public static SideCode Criar(string value)
     {
         // ?. protege contra nulo; Trim() remove espaços; ToUpperInvariant() padroniza o código.
         var normalized = value?.Trim().ToUpperInvariant();
@@ -20,5 +20,5 @@ public sealed record SideCode
     }
 
     // O operador ternário escolhe compra para C e venda para qualquer valor já validado como V.
-    public Side ToEnum() => Value == "C" ? Side.Buy : Side.Sell;
+    public Side ParaEnum() => Value == "C" ? Side.Buy : Side.Sell;
 }

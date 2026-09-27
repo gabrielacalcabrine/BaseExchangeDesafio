@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddExchangePersistence(builder.Configuration);
+DependencyInjection.AdicionarPersistencia(builder.Services, builder.Configuration);
 builder.Services.AddScoped<IOrderAccumulator, CreateOrderService>();
 // Registro explícito mantém o Composition Root claro e evita acoplamento a discovery automática.
 builder.Services.AddScoped<FluentValidation.IValidator<OrderAccumulator.Api.Contracts.Orders.CreateOrderRequest>,

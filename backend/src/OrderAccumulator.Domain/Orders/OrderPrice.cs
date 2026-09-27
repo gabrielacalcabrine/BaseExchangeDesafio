@@ -8,7 +8,7 @@ public sealed record OrderPrice
     private OrderPrice(decimal value) => Value = value;
     public decimal Value { get; }
 
-    public static OrderPrice Create(decimal value)
+    public static OrderPrice Criar(decimal value)
     {
         // decimal.Round() limita a comparação a duas casas decimais.
         // O operador % calcula o resto da divisão e confirma que o preço é múltiplo de 0,01.

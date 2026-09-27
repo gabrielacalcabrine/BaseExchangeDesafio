@@ -22,7 +22,7 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     }
 
     [Fact]
-    public async Task Swagger_ShouldBeAvailable()
+    public async Task Swagger_DeveEstarDisponivel()
     {
         var response = await client.GetAsync("/swagger/index.html");
 
@@ -31,9 +31,9 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     }
 
     [Fact]
-    public async Task CreateOrder_ShouldReturnExactResponseContract()
+    public async Task CriarOrdem_DeveRetornarContratoExatoDeResposta()
     {
-        await ResetAssetAsync();
+        await RestaurarAtivoAsync();
         try
         {
             var request = new
@@ -54,14 +54,14 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         }
         finally
         {
-            await ResetAssetAsync();
+            await RestaurarAtivoAsync();
         }
     }
 
     [Fact]
-    public async Task CreateOrder_ShouldReturnBadRequestWhenExposureLimitIsExceeded()
+    public async Task CriarOrdem_DeveRetornarBadRequestQuandoLimiteDeExposicaoForExcedido()
     {
-        await ResetAssetAsync();
+        await RestaurarAtivoAsync();
         try
         {
             var request = new
@@ -88,12 +88,12 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         }
         finally
         {
-            await ResetAssetAsync();
+            await RestaurarAtivoAsync();
         }
     }
 
     // Limpa os dados criados pelos testes HTTP sem remover o catálogo de ativos.
-    private async Task ResetAssetAsync()
+    private async Task RestaurarAtivoAsync()
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();

@@ -5,11 +5,18 @@ using OrderAccumulator.Domain.Orders;
 namespace OrderAccumulator.Infrastructure.Persistence;
 
 // Adapter que executa SQL explícito para gravar uma ordem aceita.
-public sealed class DapperOrderRepository(IDbConnectionFactory connectionFactory) : IOrderRepository
+public sealed class DapperOrderRepository : IOrderRepository
 {
-    public async Task<bool> SaveAcceptedAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
+    private readonly IDbConnectionFactory _connectionFactory;
+
+    public DapperOrderRepository(IDbConnectionFactory connectionFactory)
     {
-        await using var connection = await connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        _connectionFactory = connectionFactory;
+    }
+
+    public async Task<bool> SalvarOrdemAceitaAsync(Order order, Exposure exposure, string user, CancellationToken cancellationToken)
+    {
+        await using var connection = await _connectionFactory.CriarConexaoAbertaAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         var assetCode = ToCode(order.Asset);

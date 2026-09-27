@@ -8,7 +8,7 @@ public sealed record OrderQuantity
     private OrderQuantity(int value) => Value = value;
     public int Value { get; }
 
-    public static OrderQuantity Create(int value)
+    public static OrderQuantity Criar(int value)
     {
         // A comparação numérica verifica as duas fronteiras da regra do desafio.
         if (value <= 0 || value >= OrderRules.MaximumQuantityExclusive)

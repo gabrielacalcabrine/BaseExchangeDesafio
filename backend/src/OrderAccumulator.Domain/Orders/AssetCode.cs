@@ -8,7 +8,7 @@ public sealed record AssetCode
     private AssetCode(string value) => Value = value;
     public string Value { get; }
 
-    public static AssetCode Create(string value)
+    public static AssetCode Criar(string value)
     {
         // O operador ?. evita NullReferenceException se a entrada for nula.
         // Trim() remove espaços nas extremidades; ToUpperInvariant() normaliza o texto
@@ -22,7 +22,7 @@ public sealed record AssetCode
     }
 
     // A switch expression converte o código externo para o enum interno do domínio.
-    public Asset ToEnum() => Value switch
+    public Asset ParaEnum() => Value switch
     {
         "PETR4" => Asset.Petr4,
         "VALE3" => Asset.Vale3,
