@@ -10,6 +10,7 @@ public sealed record OrderQuantity
 
     public static OrderQuantity Create(int value)
     {
+        // A comparação numérica verifica as duas fronteiras da regra do desafio.
         if (value <= 0 || value >= OrderRules.MaximumQuantityExclusive)
             throw new DomainValidationException("A quantidade deve ser positiva e menor que 100.000.");
         return new OrderQuantity(value);

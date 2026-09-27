@@ -10,6 +10,8 @@ public sealed record OrderPrice
 
     public static OrderPrice Create(decimal value)
     {
+        // decimal.Round() limita a comparação a duas casas decimais.
+        // O operador % calcula o resto da divisão e confirma que o preço é múltiplo de 0,01.
         if (value <= 0 || value >= OrderRules.MaximumPriceExclusive ||
             decimal.Round(value, 2) != value || value % OrderRules.PriceTick != 0)
             throw new DomainValidationException("O preço deve ser positivo, menor que 1.000 e múltiplo de 0,01.");

@@ -17,13 +17,16 @@ public sealed class OrdersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CreateOrderResponse>> Create(CreateOrderRequest request)
     {
+        // ValidateAsync() executa as regras do FluentValidation e devolve um resultado agregado.
         var validation = await validator.ValidateAsync(request);
         if (!validation.IsValid)
         {
+            // Select() projeta cada erro para sua mensagem; string.Join() concatena as mensagens.
             var message = string.Join(" ", validation.Errors.Select(error => error.ErrorMessage));
             return BadRequest(new CreateOrderResponse(false, 0, message));
         }
 
+        // TryToCommand() é um método de extensão que realiza o mapeamento manual request -> command.
         // O mapper será mantido como adapter; o caso de uso será conectado na próxima etapa.
         if (!request.TryToCommand(out _, out var error))
         {
