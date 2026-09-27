@@ -1,0 +1,102 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Dapper;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Npgsql;
+
+namespace OrderAccumulator.UnitTests;
+
+// Testes de integração do adapter HTTP usando o pipeline real da API.
+public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private const string AssetCode = "VALE3";
+    private readonly HttpClient client;
+    private readonly string connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__ExchangeDatabase")
+        ?? "Host=localhost;Port=5432;Database=exchange;Username=exchange;Password=exchange";
+
+    public ApiIntegrationTests(WebApplicationFactory<Program> factory)
+    {
+        // O client hospeda a API em memória, mas usa o PostgreSQL real da configuração local.
+        client = factory.CreateClient();
+    }
+
+    [Fact]
+    public async Task Swagger_ShouldBeAvailable()
+    {
+        var response = await client.GetAsync("/swagger/index.html");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("swagger", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldReturnExactResponseContract()
+    {
+        await ResetAssetAsync();
+        try
+        {
+            var request = new
+            {
+                ativo = AssetCode,
+                lado = "C",
+                quantidade = 10,
+                preco = 12.34m
+            };
+
+            var response = await client.PostAsJsonAsync("/orders", request);
+            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.True(json.GetProperty("sucesso").GetBoolean());
+            Assert.Equal(123.40m, json.GetProperty("exposicao_atual").GetDecimal());
+            Assert.Equal(string.Empty, json.GetProperty("msg_erro").GetString());
+        }
+        finally
+        {
+            await ResetAssetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldReturnBadRequestWhenExposureLimitIsExceeded()
+    {
+        await ResetAssetAsync();
+        try
+        {
+            var request = new
+            {
+                ativo = AssetCode,
+                lado = "C",
+                quantidade = 99_999,
+                preco = 999.99m
+            };
+
+            var response = await client.PostAsJsonAsync("/orders", request);
+            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.False(json.GetProperty("sucesso").GetBoolean());
+            Assert.Equal(0m, json.GetProperty("exposicao_atual").GetDecimal());
+            Assert.Contains("limite", json.GetProperty("msg_erro").GetString(), StringComparison.OrdinalIgnoreCase);
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            var orderCount = await connection.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM ordens WHERE ativo_codigo = @AssetCode",
+                new { AssetCode });
+            Assert.Equal(0, orderCount);
+        }
+        finally
+        {
+            await ResetAssetAsync();
+        }
+    }
+
+    // Limpa os dados criados pelos testes HTTP sem remover o catálogo de ativos.
+    private async Task ResetAssetAsync()
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await connection.ExecuteAsync("DELETE FROM ordens WHERE ativo_codigo = @AssetCode; UPDATE exposicoes SET valor_atual = 0, versao = 1, usuario_alteracao = 'test-cleanup', data_alteracao = NOW() WHERE ativo_codigo = @AssetCode;", new { AssetCode });
+    }
+}

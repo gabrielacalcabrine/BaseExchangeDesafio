@@ -26,3 +26,6 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "OrderAccumulator API v1"));
 app.MapControllers();
 app.Run();
+
+// Torna o bootstrap visível para WebApplicationFactory nos testes de integração da API.
+public partial class Program { }

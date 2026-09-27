@@ -14,6 +14,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Npgsql" Version="8.0.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +28,10 @@
     <ProjectReference Include="../../src/OrderAccumulator.Domain/OrderAccumulator.Domain.csproj" />
     <!-- A Application será exercitada aqui quando os casos de uso forem implementados. -->
     <ProjectReference Include="../../src/OrderAccumulator.Application/OrderAccumulator.Application.csproj" />
+    <!-- A referência à API permite testar o pipeline HTTP real com WebApplicationFactory. -->
+    <ProjectReference Include="../../src/OrderAccumulator.Api/OrderAccumulator.Api.csproj" />
+    <!-- A referência à infraestrutura permite testar os adapters Dapper contra PostgreSQL. -->
+    <ProjectReference Include="../../src/OrderAccumulator.Infrastructure/OrderAccumulator.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
