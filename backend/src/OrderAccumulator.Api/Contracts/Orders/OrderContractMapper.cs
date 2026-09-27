@@ -1,4 +1,5 @@
 using OrderAccumulator.Application.Orders.Commands;
+using OrderAccumulator.Application.Orders.Results;
 using OrderAccumulator.Domain.Errors;
 using OrderAccumulator.Domain.Orders;
 
@@ -27,4 +28,11 @@ public static class OrderContractMapper
             return false;
         }
     }
+
+    // Mapeamento manual do resultado interno para o contrato HTTP de saída.
+    public static CreateOrderResponse ToResponse(this CreateOrderResult result)
+        => new(
+            Sucesso: result.Success,
+            ExposicaoAtual: result.CurrentExposure,
+            MsgErro: result.ErrorMessage);
 }
