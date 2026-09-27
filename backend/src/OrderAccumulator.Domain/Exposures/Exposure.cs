@@ -13,6 +13,10 @@ public sealed class Exposure
     // Cria uma exposição vazia para um ativo.
     public static Exposure Empty(Asset asset) => new(asset);
 
+    // Reconstitui o agregado a partir de um valor persistido, sem expor o construtor.
+    public static Exposure Rehydrate(Asset asset, decimal currentValue)
+        => new(asset) { CurrentValue = decimal.Round(currentValue, 2) };
+
     // Valida primeiro e só depois altera o estado, garantindo rejeição sem efeito parcial.
     public bool TryRegister(Order order, out string? error)
     {
@@ -27,4 +31,3 @@ public sealed class Exposure
         return true;
     }
 }
-

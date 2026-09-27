@@ -1,6 +1,9 @@
+using OrderAccumulator.Infrastructure;
+
 // Composition Root: ponto único onde implementações concretas são registradas.
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
+builder.Services.AddExchangePersistence(builder.Configuration);
 // Registro explícito mantém o Composition Root claro e evita acoplamento a discovery automática.
 builder.Services.AddScoped<FluentValidation.IValidator<OrderAccumulator.Api.Contracts.Orders.CreateOrderRequest>,
     OrderAccumulator.Api.Contracts.Orders.CreateOrderRequestValidator>();
