@@ -1,6 +1,5 @@
 namespace OrderAccumulator.Domain.Orders;
 
-// Regras invariantes da ordem, mantidas no domínio para evitar duplicação entre adapters.
 public static class OrderRules
 {
     public const int MaximumQuantityExclusive = 100_000;

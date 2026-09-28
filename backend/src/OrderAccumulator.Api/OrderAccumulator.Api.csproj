@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <ProjectReference Include="../OrderAccumulator.Application/OrderAccumulator.Application.csproj" />
     <ProjectReference Include="../OrderAccumulator.Infrastructure/OrderAccumulator.Infrastructure.csproj" />
   </ItemGroup>

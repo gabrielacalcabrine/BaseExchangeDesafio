@@ -2,13 +2,12 @@ using OrderAccumulator.Domain.Errors;
 
 namespace OrderAccumulator.Domain.Orders;
 
-// Value Object para preço, usando decimal para evitar erros de ponto flutuante financeiro.
 public sealed record OrderPrice
 {
     private OrderPrice(decimal value) => Value = value;
     public decimal Value { get; }
 
-    public static OrderPrice Create(decimal value)
+    public static OrderPrice Criar(decimal value)
     {
         if (value <= 0 || value >= OrderRules.MaximumPriceExclusive ||
             decimal.Round(value, 2) != value || value % OrderRules.PriceTick != 0)
