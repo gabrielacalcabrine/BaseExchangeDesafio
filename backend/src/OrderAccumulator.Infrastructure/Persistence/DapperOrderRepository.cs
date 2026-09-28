@@ -4,7 +4,6 @@ using OrderAccumulator.Domain.Orders;
 
 namespace OrderAccumulator.Infrastructure.Persistence;
 
-// Adapter que executa SQL explícito para gravar uma ordem aceita.
 public sealed class DapperOrderRepository : IOrderRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
@@ -24,7 +23,6 @@ public sealed class DapperOrderRepository : IOrderRepository
         var financialValue = decimal.Round(order.Price * order.Quantity, 2);
         var now = DateTime.UtcNow;
 
-        // Garante que exista uma linha de exposição antes do UPDATE da transação.
         const string ensureExposureSql = """
             INSERT INTO exposicoes (ativo_codigo, valor_atual, usuario_inclusao, data_inclusao, versao)
             VALUES (@AssetCode, 0, @User, @Now, 1)
@@ -36,7 +34,6 @@ public sealed class DapperOrderRepository : IOrderRepository
             transaction,
             cancellationToken: cancellationToken));
 
-        // Atualiza a exposição e seus campos de auditoria.
         const string updateExposureSql = """
             UPDATE exposicoes
             SET valor_atual = @CurrentValue,
@@ -52,7 +49,6 @@ public sealed class DapperOrderRepository : IOrderRepository
             {
                 AssetCode = assetCode,
                 CurrentValue = exposure.CurrentValue,
-                // A atualização condicional implementa controle de concorrência otimista.
                 PreviousValue = exposure.CurrentValue - order.SignedFinancialValue(),
                 User = user,
                 Now = now
@@ -62,12 +58,10 @@ public sealed class DapperOrderRepository : IOrderRepository
 
         if (updatedRows == 0)
         {
-            // Outra requisição alterou a exposição; rollback evita registrar uma ordem inconsistente.
             await transaction.RollbackAsync(cancellationToken);
             return false;
         }
 
-        // Insere apenas ordens aceitas; ordens rejeitadas não chegam a este repositório.
         const string insertOrderSql = """
             INSERT INTO ordens (
                 ativo_codigo,
@@ -101,12 +95,10 @@ public sealed class DapperOrderRepository : IOrderRepository
             transaction,
             cancellationToken: cancellationToken));
 
-        // Commit confirma ordem e exposição juntas; qualquer erro provoca rollback ao descartar a transação.
         await transaction.CommitAsync(cancellationToken);
         return true;
     }
 
-    // Converte o enum do domínio para o código textual persistido no banco.
     private static string ToCode(Asset asset) => asset switch
     {
         Asset.Petr4 => "PETR4",

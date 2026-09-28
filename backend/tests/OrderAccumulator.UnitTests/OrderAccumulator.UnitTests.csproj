@@ -24,13 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Os testes de domínio referenciam apenas a camada que contém as invariantes. -->
+    
     <ProjectReference Include="../../src/OrderAccumulator.Domain/OrderAccumulator.Domain.csproj" />
-    <!-- A Application será exercitada aqui quando os casos de uso forem implementados. -->
+    
     <ProjectReference Include="../../src/OrderAccumulator.Application/OrderAccumulator.Application.csproj" />
-    <!-- A referência à API permite testar o pipeline HTTP real com WebApplicationFactory. -->
+    
     <ProjectReference Include="../../src/OrderAccumulator.Api/OrderAccumulator.Api.csproj" />
-    <!-- A referência à infraestrutura permite testar os adapters Dapper contra PostgreSQL. -->
+    
     <ProjectReference Include="../../src/OrderAccumulator.Infrastructure/OrderAccumulator.Infrastructure.csproj" />
   </ItemGroup>
 

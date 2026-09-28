@@ -2,7 +2,6 @@ using FluentValidation;
 
 namespace OrderAccumulator.Api.Contracts.Orders;
 
-// Validação de entrada HTTP: fornece feedback estruturado antes de chegar ao caso de uso.
 public sealed class CreateOrderRequestValidator : AbstractValidator<CreateOrderRequest>
 {
     public CreateOrderRequestValidator()

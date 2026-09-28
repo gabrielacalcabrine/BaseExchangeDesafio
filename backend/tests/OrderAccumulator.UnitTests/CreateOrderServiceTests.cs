@@ -5,13 +5,11 @@ using OrderAccumulator.Domain.Orders;
 
 namespace OrderAccumulator.UnitTests;
 
-// Testes do caso de uso sem banco ou HTTP, usando portas falsas em memória.
 public sealed class CreateOrderServiceTests
 {
     [Fact]
     public async Task ExecutarAsync_DevePersistirOrdemAceitaERetornarExposicao()
     {
-        // A exposição inicia zerada e a compra deve aumentar seu valor.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4);
         var orderRepository = new FakeOrderRepository { SaveResult = true };
         var service = new CreateOrderService(exposureRepository, orderRepository);
@@ -28,7 +26,6 @@ public sealed class CreateOrderServiceTests
     [Fact]
     public async Task ExecutarAsync_DeveRejeitarOrdemSemPersistirQuandoLimiteForExcedido()
     {
-        // Uma exposição próxima do limite deve rejeitar a ordem que ultrapassaria R$ 1.000.000.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4, 999_999m);
         var orderRepository = new FakeOrderRepository { SaveResult = true };
         var service = new CreateOrderService(exposureRepository, orderRepository);
@@ -45,7 +42,6 @@ public sealed class CreateOrderServiceTests
     [Fact]
     public async Task ExecutarAsync_DeveRetornarFalhaQuandoRepositoryDetectarConflitoDeConcorrencia()
     {
-        // A porta de persistência pode sinalizar que outra operação atualizou o ativo primeiro.
         var exposureRepository = new FakeExposureRepository(Asset.Petr4);
         var orderRepository = new FakeOrderRepository { SaveResult = false };
         var service = new CreateOrderService(exposureRepository, orderRepository);
@@ -58,7 +54,6 @@ public sealed class CreateOrderServiceTests
         Assert.Contains("alterada por outra operação", result.ErrorMessage);
     }
 
-    // Fake repository de exposição: substitui PostgreSQL sem alterar o caso de uso.
     private sealed class FakeExposureRepository(Asset asset, decimal currentValue = 0) : IExposureRepository
     {
         private readonly Exposure exposure = Exposure.Reidratar(asset, currentValue);
@@ -68,7 +63,6 @@ public sealed class CreateOrderServiceTests
             => Task.CompletedTask;
     }
 
-    // Fake repository de ordens: registra se o caso de uso tentou persistir a operação.
     private sealed class FakeOrderRepository : IOrderRepository
     {
         public bool SaveResult { get; init; }

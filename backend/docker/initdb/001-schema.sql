@@ -1,4 +1,3 @@
--- Schema inicial do OrderAccumulator. O PostgreSQL executa este arquivo na primeira criação do volume.
 CREATE TABLE IF NOT EXISTS ativos (
     codigo VARCHAR(10) PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,

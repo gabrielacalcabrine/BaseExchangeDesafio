@@ -5,7 +5,6 @@ import type { CreateOrderRequest, CreateOrderResponse } from '../../shared/contr
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Feature page: coordena o estado da tela e apresenta a operação em linguagem de negócio.
 export function OrderGeneratorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<CreateOrderResponse | null>(null);
@@ -31,7 +30,6 @@ export function OrderGeneratorPage() {
   const operationLabel = isBuy ? 'Compra' : 'Venda';
   const orderValue = submittedOrder ? submittedOrder.quantidade * submittedOrder.preco : 0;
   const formattedOrderValue = currencyFormatter.format(orderValue);
-  // O sinal exibido vem da exposição retornada pelo backend, não do lado da ordem.
   const formattedExposure = result ? currencyFormatter.format(result.exposicao_atual) : '';
 
   return (

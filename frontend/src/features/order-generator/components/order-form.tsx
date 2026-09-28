@@ -6,7 +6,6 @@ interface OrderFormProps {
   onSubmit: (data: { ativo: Asset; lado: Side; quantidade: number; preco: number }) => void;
 }
 
-// Componente visual isolado: coleta dados e deixa as regras do domínio para o backend.
 export function OrderForm({ isSubmitting, onSubmit }: OrderFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

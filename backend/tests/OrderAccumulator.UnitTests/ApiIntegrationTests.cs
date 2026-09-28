@@ -7,7 +7,6 @@ using Npgsql;
 
 namespace OrderAccumulator.UnitTests;
 
-// Testes de integração do adapter HTTP usando o pipeline real da API.
 public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string AssetCode = "VALE3";
@@ -17,7 +16,6 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
     public ApiIntegrationTests(WebApplicationFactory<Program> factory)
     {
-        // O client hospeda a API em memória, mas usa o PostgreSQL real da configuração local.
         client = factory.CreateClient();
     }
 
@@ -92,7 +90,6 @@ public sealed class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         }
     }
 
-    // Limpa os dados criados pelos testes HTTP sem remover o catálogo de ativos.
     private async Task RestaurarAtivoAsync()
     {
         await using var connection = new NpgsqlConnection(connectionString);

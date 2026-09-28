@@ -4,7 +4,6 @@ using OrderAccumulator.Domain.Orders;
 
 namespace OrderAccumulator.Infrastructure.Persistence;
 
-// Implementação inicial para desenvolvimento, facilmente substituível por uma persistente.
 public sealed class InMemoryExposureRepository : IExposureRepository
 {
     private readonly ConcurrentDictionary<Asset, Exposure> exposures = new();

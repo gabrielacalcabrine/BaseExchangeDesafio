@@ -4,7 +4,6 @@ using OrderAccumulator.Domain.Orders;
 
 namespace OrderAccumulator.Infrastructure.Persistence;
 
-// Adapter de persistência: SQL explícito traduz a porta do domínio para PostgreSQL.
 public sealed class DapperExposureRepository : IExposureRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
@@ -20,7 +19,6 @@ public sealed class DapperExposureRepository : IExposureRepository
         await using var connection = await _connectionFactory.CriarConexaoAbertaAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-        // INSERT ... ON CONFLICT torna a criação idempotente quando duas requisições chegam juntas.
         const string insertSql = """
             INSERT INTO exposicoes (ativo_codigo, valor_atual, usuario_inclusao, data_inclusao, versao)
             VALUES (@Code, 0, 'system', NOW(), 1)
@@ -28,7 +26,6 @@ public sealed class DapperExposureRepository : IExposureRepository
             """;
         await connection.ExecuteAsync(new CommandDefinition(insertSql, new { Code = code }, transaction, cancellationToken: cancellationToken));
 
-        // FOR UPDATE bloqueia a linha durante a transação para proteger a exposição atual.
         const string selectSql = """
             SELECT valor_atual
             FROM exposicoes
@@ -47,7 +44,6 @@ public sealed class DapperExposureRepository : IExposureRepository
         var code = ToCode(exposure.Asset);
         await using var connection = await _connectionFactory.CriarConexaoAbertaAsync(cancellationToken);
 
-        // O UPDATE registra o novo valor e os dados de auditoria definidos na diagramção.
         const string updateSql = """
             UPDATE exposicoes
             SET valor_atual = @CurrentValue,
@@ -62,7 +58,6 @@ public sealed class DapperExposureRepository : IExposureRepository
             cancellationToken: cancellationToken));
     }
 
-    // O domínio usa enum; o banco usa o código textual definido no contrato.
     private static string ToCode(Asset asset) => asset switch
     {
         Asset.Petr4 => "PETR4",

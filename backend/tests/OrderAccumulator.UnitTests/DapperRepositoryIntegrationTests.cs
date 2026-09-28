@@ -6,7 +6,6 @@ using OrderAccumulator.Infrastructure.Persistence;
 
 namespace OrderAccumulator.UnitTests;
 
-// Testes de integração dos adapters Dapper contra o PostgreSQL disponibilizado pelo Docker.
 public sealed class DapperRepositoryIntegrationTests
 {
     private const string AssetCode = "PETR4";
@@ -80,7 +79,6 @@ public sealed class DapperRepositoryIntegrationTests
             Assert.True(firstExposure.TentarRegistrar(firstOrder, out _));
             Assert.True(await repository.SalvarOrdemAceitaAsync(firstOrder, firstExposure, "integration-test", CancellationToken.None));
 
-            // Este snapshot não conhece a primeira ordem e deve falhar pelo controle de concorrência.
             var staleOrder = Order.Criar(Asset.Petr4, Side.Buy, 100, 10m);
             var staleExposure = Exposure.Vazia(Asset.Petr4);
             Assert.True(staleExposure.TentarRegistrar(staleOrder, out _));
@@ -97,7 +95,6 @@ public sealed class DapperRepositoryIntegrationTests
         }
     }
 
-    // Limpa apenas os dados usados por este conjunto de testes.
     private async Task RestaurarAtivoAsync()
     {
         await using var connection = new NpgsqlConnection(connectionString);
