@@ -33,5 +33,19 @@ services:
       database:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # O navegador acessa a API pela porta publicada no host.
+        VITE_API_BASE_URL: http://localhost:3333
+    container_name: base-exchange-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
 volumes:
   exchange_postgres_data:

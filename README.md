@@ -31,6 +31,7 @@ Cada ativo possui limite absoluto de **R$ 1.000.000,00**. Uma ordem que ultrapas
 - PostgreSQL 16
 - Swagger/OpenAPI
 - xUnit para testes
+- Docker e Docker Compose
 
 ### Frontend
 
@@ -39,6 +40,7 @@ Cada ativo possui limite absoluto de **R$ 1.000.000,00**. Uma ordem que ultrapas
 - Vite
 - CSS responsivo
 - Integração REST com a API
+- Nginx para servir a aplicação compilada no container
 
 ## Estrutura do projeto
 
@@ -72,17 +74,59 @@ Para executar o projeto localmente, instale:
 
 ## Como executar com Docker
 
-Na raiz do projeto, execute:
+O `docker-compose.yml` cria três containers:
+
+- `base-exchange-frontend`: imagem React compilada e servida pelo Nginx.
+- `base-exchange-api`: imagem da API .NET 8.
+- `base-exchange-database`: PostgreSQL 16 com o schema inicial.
+
+Na raiz do projeto, construa as imagens e suba a aplicação:
 
 ```bash
-docker compose up --build
+docker compose build
+docker compose up -d
 ```
 
-A API estará disponível em:
+Para acompanhar a inicialização:
 
+```bash
+docker compose logs -f
+```
+
+Após os containers estarem saudáveis, acesse:
+
+- Frontend: http://localhost:5173
 - API: http://localhost:3333
 - Swagger: http://localhost:3333/swagger
 - PostgreSQL: localhost:5432
+
+Também é possível construir e iniciar tudo em um único comando:
+
+```bash
+docker compose up --build -d
+```
+
+Para verificar os containers em execução:
+
+```bash
+docker compose ps
+```
+
+Para testar rapidamente a API pelo terminal:
+
+```bash
+curl -X POST http://localhost:3333/orders \
+  -H "Content-Type: application/json" \
+  -d '{"ativo":"PETR4","lado":"C","quantidade":100,"preco":32.45}'
+```
+
+No Windows PowerShell, use:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3333/orders -Method Post `
+  -ContentType 'application/json' `
+  -Body '{"ativo":"PETR4","lado":"C","quantidade":100,"preco":32.45}'
+```
 
 ### Acesso local ao PostgreSQL
 
@@ -107,6 +151,8 @@ Para remover também os dados persistidos do banco:
 ```bash
 docker compose down -v
 ```
+
+O comando `docker compose down -v` remove o volume do PostgreSQL e, consequentemente, os dados locais registrados durante os testes.
 
 ## Como executar o backend sem Docker
 
@@ -217,4 +263,3 @@ npm run build
 - Comentários no código explicando responsabilidades e decisões relevantes.
 
 This is a challenge by [Coodesh](https://coodesh.com/).
-
